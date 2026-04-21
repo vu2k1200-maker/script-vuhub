@@ -1,0 +1,171 @@
+--// BLUE SKY AFK LOOP
+--// Bật = spam true tới 20s
+--// Tới 20s -> false -> true lại
+--// Lặp vô hạn tới khi tắt
+--// 100 luồng cùng lúc
+
+local Running = false
+local Threads = 20000
+
+local Remote = game:GetService("ReplicatedStorage")
+    :WaitForChild("RS")
+    :WaitForChild("RGX")
+    :WaitForChild("RIO")
+
+local UIS = game:GetService("UserInputService")
+
+local function Fire(v)
+    Remote:FireServer("afk", v)
+end
+
+--========================
+-- TIME
+--========================
+local StartMinute = 17
+local StartSecond = 58
+local TargetSecond = 20
+
+local TotalStart = (StartMinute * 60) + StartSecond
+local NeedPress = TotalStart - TargetSecond
+
+--========================
+-- GUI
+--========================
+local GUI = Instance.new("ScreenGui", game.CoreGui)
+GUI.Name = "BlueSkyAFKLoop"
+GUI.ResetOnSpawn = false
+
+local Main = Instance.new("Frame", GUI)
+Main.Size = UDim2.new(0,230,0,140)
+Main.Position = UDim2.new(0.5,-115,0.5,-70)
+Main.BackgroundColor3 = Color3.fromRGB(135,206,235)
+Main.BorderSizePixel = 0
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0,10)
+
+local Top = Instance.new("Frame", Main)
+Top.Size = UDim2.new(1,0,0,35)
+Top.BackgroundColor3 = Color3.fromRGB(70,130,180)
+Top.BorderSizePixel = 0
+Instance.new("UICorner", Top).CornerRadius = UDim.new(0,10)
+
+local Title = Instance.new("TextLabel", Top)
+Title.Size = UDim2.new(1,0,1,0)
+Title.BackgroundTransparency = 1
+Title.Text = "bobaconhub"
+Title.TextScaled = true
+Title.Font = Enum.Font.GothamBold
+Title.TextColor3 = Color3.fromRGB(255,255,255)
+
+local Info = Instance.new("TextLabel", Main)
+Info.Size = UDim2.new(1,-20,0,30)
+Info.Position = UDim2.new(0,10,0,45)
+Info.BackgroundTransparency = 1
+Info.Text = "dupe gem"
+Info.TextScaled = true
+Info.Font = Enum.Font.Gotham
+Info.TextColor3 = Color3.fromRGB(0,0,0)
+
+local Button = Instance.new("TextButton", Main)
+Button.Size = UDim2.new(0,200,0,40)
+Button.Position = UDim2.new(0.5,-100,0,85)
+Button.Text = "LOOP: OFF"
+Button.TextScaled = true
+Button.Font = Enum.Font.GothamBold
+Button.TextColor3 = Color3.fromRGB(255,255,255)
+Button.BackgroundColor3 = Color3.fromRGB(100,149,237)
+Button.BorderSizePixel = 0
+Instance.new("UICorner", Button).CornerRadius = UDim.new(0,8)
+
+--========================
+-- DRAG
+--========================
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+	local delta = input.Position - dragStart
+	Main.Position = UDim2.new(
+		startPos.X.Scale,
+		startPos.X.Offset + delta.X,
+		startPos.Y.Scale,
+		startPos.Y.Offset + delta.Y
+	)
+end
+
+Top.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch
+	or input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = Main.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+Top.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch
+	or input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if dragging and input == dragInput then
+		update(input)
+	end
+end)
+
+--========================
+-- MAIN LOOP
+--========================
+local function Cycle()
+	while Running do
+		local Count = 0
+
+		-- spam true tới 20s
+		for i = 1, Threads do
+			task.spawn(function()
+				while Running and Count < NeedPress do
+					Count += 1
+					if Count <= NeedPress then
+						Fire(true)
+					end
+					task.wait()
+				end
+			end)
+		end
+
+		repeat task.wait() until Count >= NeedPress or not Running
+		if not Running then break end
+
+		-- tới 20s
+		Fire(false)
+		task.wait(0.2)
+
+		-- bật lại reset vòng mới
+		Fire(true)
+		task.wait(0)
+	end
+end
+
+Button.MouseButton1Click:Connect(function()
+	Running = not Running
+
+	if Running then
+		Button.Text = "ON"
+		Button.BackgroundColor3 = Color3.fromRGB(0,191,255)
+
+		task.spawn(Cycle)
+	else
+		Fire(false)
+		Button.Text = "OFF"
+		Button.BackgroundColor3 = Color3.fromRGB(100,149,237)
+	end
+end)
