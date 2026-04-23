@@ -1,11 +1,10 @@
 --// BLUE SKY AFK LOOP
---// Bật = spam true tới 20s
---// Tới 20s -> false -> true lại
---// Lặp vô hạn tới khi tắt
---// 100 luồng cùng lúc
+--// Bật = tự gửi true liên tục
+--// Tắt = tự gửi false
+--// Loop vô hạn tới khi tắt
 
 local Running = false
-local Threads = 20000
+local Threads = 100
 
 local Remote = game:GetService("ReplicatedStorage")
     :WaitForChild("RS")
@@ -17,16 +16,6 @@ local UIS = game:GetService("UserInputService")
 local function Fire(v)
     Remote:FireServer("afk", v)
 end
-
---========================
--- TIME
---========================
-local StartMinute = 17
-local StartSecond = 58
-local TargetSecond = -20000000
-
-local TotalStart = (StartMinute * 60) + StartSecond
-local NeedPress = TotalStart - TargetSecond
 
 --========================
 -- GUI
@@ -127,31 +116,15 @@ end)
 --========================
 local function Cycle()
 	while Running do
-		local Count = 0
-
-		-- spam true tới 20s
 		for i = 1, Threads do
 			task.spawn(function()
-				while Running and Count < NeedPress do
-					Count += 1
-					if Count <= NeedPress then
-						Fire(true)
-					end
+				while Running do
+					Fire(true)
 					task.wait()
 				end
 			end)
 		end
-
-		repeat task.wait() until Count >= NeedPress or not Running
-		if not Running then break end
-
-		-- tới 20s
-		Fire(false)
 		task.wait(0.2)
-
-		-- bật lại reset vòng mới
-		Fire(true)
-		task.wait(0)
 	end
 end
 
@@ -159,13 +132,16 @@ Button.MouseButton1Click:Connect(function()
 	Running = not Running
 
 	if Running then
-		Button.Text = "ON"
+		Button.Text = "LOOP: ON"
 		Button.BackgroundColor3 = Color3.fromRGB(0,191,255)
 
+		Fire(true) -- bật là gửi true ngay
 		task.spawn(Cycle)
 	else
-		Fire(false)
-		Button.Text = "OFF"
+		Running = false
+		Fire(false) -- tắt là gửi false ngay
+
+		Button.Text = "LOOP: OFF"
 		Button.BackgroundColor3 = Color3.fromRGB(100,149,237)
 	end
 end)
