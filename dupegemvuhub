@@ -4,7 +4,7 @@
 --// Loop vô hạn tới khi tắt
 
 local Running = false
-local Threads = 10000
+local Threads = 2000
 
 local Remote = game:GetService("ReplicatedStorage")
     :WaitForChild("RS")
