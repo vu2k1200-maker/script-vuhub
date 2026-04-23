@@ -23,7 +23,7 @@ end
 --========================
 local StartMinute = 17
 local StartSecond = 58
-local TargetSecond = 20
+local TargetSecond = -20000000
 
 local TotalStart = (StartMinute * 60) + StartSecond
 local NeedPress = TotalStart - TargetSecond
